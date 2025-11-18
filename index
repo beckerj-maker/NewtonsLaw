@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Newton's Law Motion Simulator</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f5f7;
+      color: #222;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 1.5rem;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      flex: 1 1 320px;
+      box-sizing: border-box;
+    }
+
+    .panel h2 {
+      font-size: 1.1rem;
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 2fr;
+      gap: 10px 12px;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    input[type="number"],
+    input[type="range"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    input[type="number"] {
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+    }
+
+    .range-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .range-row span {
+      min-width: 38px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.8rem;
+    }
+
+    .checkbox-row {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .buttons {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+      transition: transform 0.06s ease, box-shadow 0.06s ease, background 0.1s ease;
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+      box-shadow: none;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+    }
+
+    button.secondary:hover {
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    /* Visualization */
+    .visual-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .track {
+      position: relative;
+      height: 120px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #e5e7eb, #d1d5db);
+      overflow: hidden;
+      padding: 30px 24px;
+      box-sizing: border-box;
+    }
+
+    .track-line {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 50%;
+      height: 4px;
+      margin-top: -2px;
+      border-radius: 999px;
+      background: #9ca3af;
+    }
+
+    .cart {
+      position: absolute;
+      bottom: 25px;
+      width: 60px;
+      height: 40px;
+      border-radius: 10px;
+      background: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f9fafb;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transform: translateX(0);
+    }
+
+    .cart::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      bottom: -10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #4b5563;
+      box-shadow:
+        -20px 0 0 0 #4b5563,
+        20px 0 0 0 #4b5563;
+    }
+
+    .tick {
+      position: absolute;
+      top: 50%;
+      width: 2px;
+      height: 10px;
+      background: #6b7280;
+      transform: translateY(-50%);
+    }
+
+    .tick-label {
+      position: absolute;
+      top: calc(50% + 14px);
+      font-size: 0.7rem;
+      color: #374151;
+      transform: translateX(-50%);
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+
+    .readout-item {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 6px 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .readout-label {
+      color: #6b7280;
+      font-size: 0.75rem;
+    }
+
+    .readout-value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      margin-top: 1px;
+    }
+
+    .equations {
+      font-size: 0.8rem;
+      color: #4b5563;
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 800px) {
+      .readout {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Newton's Law Motion Simulator</h1>
+  <p class="subtitle">
+    Explore how mass, force, and friction affect motion: \( F_\text{net} = m \cdot a \)
+  </p>
+
+  <div class="container">
+    <!-- Controls -->
+    <div class="panel">
+      <h2>Controls</h2>
+      <div class="controls-grid">
+        <!-- Mass -->
+        <label for="massInput">Mass (kg)</label>
+        <div class="range-row">
+          <input type="range" id="massSlider" min="1" max="20" step="1" value="5">
+          <input type="number" id="massInput" min="0.5" max="50" step="0.5" value="5" />
+        </div>
+
+        <!-- Force -->
+        <label for="forceInput">Applied Force (N)</label>
+        <div class="range-row">
+          <input type="range" id="forceSlider" min="-40" max="40" step="1" value="10">
+          <span id="forceValue">10 N</span>
+        </div>
+
+        <!-- Friction toggle -->
+        <div class="checkbox-row">
+          <input type="checkbox" id="frictionToggle" checked />
+          <label for="frictionToggle" style="font-weight: 500;">Include kinetic friction</label>
+        </div>
+
+        <!-- Friction coefficient -->
+        <label for="frictionInput">Friction coefficient (μ)</label>
+        <div class="range-row">
+          <input type="range" id="frictionSlider" min="0" max="0.8" step="0.05" value="0.2">
+          <span id="frictionValue">0.20</span>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button id="startBtn">▶ Run</button>
+        <button id="pauseBtn" class="secondary">⏸ Pause</button>
+        <button id="resetBtn" class="secondary">⟲ Reset</button>
+      </div>
+
+      <div style="margin-top: 12px; font-size: 0.8rem; color: #4b5563;">
+        Tip: Try a **small mass** with a **large force**, then a **large mass** with the same force.
+        What happens to the acceleration?
+      </div>
+    </div>
+
+    <!-- Visualization & Data -->
+    <div class="panel">
+      <div class="visual-wrapper">
+        <h2>Motion View</h2>
+        <div class="track" id="track">
+          <div class="track-line"></div>
+          <!-- Ticks (0 to 10 m) -->
+          <div class="tick" style="left: 24px;"></div>
+          <div class="tick-label" style="left: 24px;">0 m</div>
+
+          <div class="tick" style="left: 50%;"></div>
+          <div class="tick-label" style="left: 50%;">5 m</div>
+
+          <div class="tick" style="right: 24px;"></div>
+          <div class="tick-label" style="right: 24px; transform: translateX(50%);">10 m</div>
+
+          <div class="cart" id="cart">Cart</div>
+        </div>
+
+        <div class="readout">
+          <div class="readout-item">
+            <div class="readout-label">Time (s)</div>
+            <div class="readout-value" id="timeDisplay">0.00</div>
+          </div>
+          <div class="readout-item">
+            <div class="readout-label">Position (m)</div>
+            <div class="readout-value" id="positionDisplay">0.00</div>
+          </div>
+          <div class="readout-item">
+            <div class="readout-label">Velocity (m/s)</div>
+            <div class="readout-value" id="velocityDisplay">0.00</div>
+          </div>
+          <div class="readout-item">
+            <div class="readout-label">Acceleration (m/s²)</div>
+            <div class="readout-value" id="accelDisplay">0.00</div>
+          </div>
+          <div class="readout-item">
+            <div class="readout-label">Net Force (N)</div>
+            <div class="readout-value" id="netForceDisplay">0.00</div>
+          </div>
+          <div class="readout-item">
+            <div class="readout-label">Friction Force (N)</div>
+            <div class="readout-value" id="frictionForceDisplay">0.00</div>
+          </div>
+        </div>
+
+        <div class="equations">
+          <strong>Model assumptions:</strong><br>
+          &bull; Horizontal motion only, flat surface<br>
+          &bull; Net force: <code>F<sub>net</sub> = F<sub>applied</sub> + F<sub>friction</sub></code><br>
+          &bull; Kinetic friction (if on): <code>|F<sub>friction</sub>| = μ · m · g</code>, opposite direction of motion<br>
+          &bull; Acceleration: <code>a = F<sub>net</sub> / m</code><br>
+          &bull; Position &amp; velocity are updated using small time steps (numerical simulation).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- DOM elements ---
+    const massSlider = document.getElementById('massSlider');
+    const massInput = document.getElementById('massInput');
+    const forceSlider = document.getElementById('forceSlider');
+    const forceValue = document.getElementById('forceValue');
+    const frictionToggle = document.getElementById('frictionToggle');
+    const frictionSlider = document.getElementById('frictionSlider');
+    const frictionValue = document.getElementById('frictionValue');
+
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const cart = document.getElementById('cart');
+    const track = document.getElementById('track');
+
+    const timeDisplay = document.getElementById('timeDisplay');
+    const positionDisplay = document.getElementById('positionDisplay');
+    const velocityDisplay = document.getElementById('velocityDisplay');
+    const accelDisplay = document.getElementById('accelDisplay');
+    const netForceDisplay = document.getElementById('netForceDisplay');
+    const frictionForceDisplay = document.getElementById('frictionForceDisplay');
+
+    // --- Physics constants & state ---
+    const g = 9.8;
+    const maxPosition = 10; // meters (end of track)
+    let position = 0;       // meters
+    let velocity = 0;       // m/s
+    let acceleration = 0;   // m/s^2
+    let time = 0;           // seconds
+
+    let running = false;
+    let lastTimestamp = null;
+
+    // --- Helper: get values from controls ---
+    function getMass() {
+      return Math.max(0.1, parseFloat(massInput.value) || 1);
+    }
+
+    function getAppliedForce() {
+      return parseFloat(forceSlider.value) || 0;
+    }
+
+    function getFrictionCoeff() {
+      return parseFloat(frictionSlider.value) || 0;
+    }
+
+    // --- Sync sliders & inputs ---
+    massSlider.addEventListener('input', () => {
+      massInput.value = massSlider.value;
+    });
+
+    massInput.addEventListener('input', () => {
+      massSlider.value = massInput.value;
+    });
+
+    forceSlider.addEventListener('input', () => {
+      forceValue.textContent = forceSlider.value + ' N';
+    });
+
+    frictionSlider.addEventListener('input', () => {
+      frictionValue.textContent = parseFloat(frictionSlider.value).toFixed(2);
+    });
+
+    // --- Buttons ---
+    startBtn.addEventListener('click', () => {
+      if (!running) {
+        running = true;
+        lastTimestamp = null;
+        requestAnimationFrame(step);
+      }
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      running = false;
+    });
+
+    resetBtn.addEventListener('click', () => {
+      running = false;
+      time = 0;
+      position = 0;
+      velocity = 0;
+      acceleration = 0;
+      lastTimestamp = null;
+      updateDisplays(0, 0, 0, 0, 0);
+      updateCartPosition();
+    });
+
+    // --- Update visuals / readout ---
+    function updateDisplays(accel, netForce, frictionForce, vel, pos) {
+      timeDisplay.textContent = time.toFixed(2);
+      positionDisplay.textContent = pos.toFixed(2);
+      velocityDisplay.textContent = vel.toFixed(2);
+      accelDisplay.textContent = accel.toFixed(2);
+      netForceDisplay.textContent = netForce.toFixed(2);
+      frictionForceDisplay.textContent = frictionForce.toFixed(2);
+    }
+
+    function updateCartPosition() {
+      const trackRect = track.getBoundingClientRect();
+      const cartRect = cart.getBoundingClientRect();
+      const leftPadding = 24; // matches CSS
+      const rightPadding = 24;
+      const usableWidth = trackRect.width - leftPadding - rightPadding - cartRect.width;
+
+      const clampedPosition = Math.min(Math.max(position, 0), maxPosition);
+      const fraction = clampedPosition / maxPosition;
+      const x = leftPadding + fraction * usableWidth;
+
+      cart.style.left = x + 'px';
+    }
+
+    // --- Simulation step ---
+    function step(timestamp) {
+      if (!running) return;
+
+      if (!lastTimestamp) {
+        lastTimestamp = timestamp;
+        requestAnimationFrame(step);
+        return;
+      }
+
+      const dt = (timestamp - lastTimestamp) / 1000; // seconds
+      lastTimestamp = timestamp;
+
+      const mass = getMass();
+      const F_applied = getAppliedForce();
+      let F_friction = 0;
+
+      if (frictionToggle.checked) {
+        // Direction of motion or intended motion
+        let direction = 0;
+        if (Math.abs(velocity) > 0.01) {
+          direction = velocity > 0 ? 1 : -1;
+        } else if (Math.abs(velocity) <= 0.01 && Math.abs(F_applied) > 0.01) {
+          direction = F_applied > 0 ? 1 : -1;
+        }
+
+        if (direction !== 0) {
+          const normal = mass * g;
+          const mu = getFrictionCoeff();
+          const F_mag = mu * normal;
+          F_friction = -direction * F_mag;
+
+          // Simple static friction check: if applied force too small, no motion
+          if (Math.abs(F_applied) < F_mag && Math.abs(velocity) < 0.01) {
+            F_friction = -F_applied; // cancels applied force
+          }
+        }
+      }
+
+      const F_net = F_applied + F_friction;
+      acceleration = F_net / mass;
+
+      // Integrate motion
+      velocity += acceleration * dt;
+      position += velocity * dt;
+      time += dt;
+
+      // Stop at boundaries
+      if (position < 0) {
+        position = 0;
+        velocity = 0;
+      }
+      if (position > maxPosition) {
+        position = maxPosition;
+        velocity = 0;
+      }
+
+      updateCartPosition();
+      updateDisplays(acceleration, F_net, F_friction, velocity, position);
+
+      requestAnimationFrame(step);
+    }
+
+    // Initialize displays
+    forceValue.textContent = forceSlider.value + ' N';
+    frictionValue.textContent = parseFloat(frictionSlider.value).toFixed(2);
+    updateDisplays(0, 0, 0, 0, 0);
+    updateCartPosition();
+  </script>
+</body>
+</html>
